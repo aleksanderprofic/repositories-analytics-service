@@ -1,4 +1,5 @@
 from clients import github
+from database import db
 
 
 def get_repository(repository_name: str):
@@ -10,4 +11,8 @@ def get_repository(repository_name: str):
     #         'branches': [],
     #         'repositoryStatistics': {}
     #     }
-    return github.get_repository(repository_name)
+    print(f"Metrics analyzed: {db.get_metrics('frege-extractor', 'master')}")
+    print(f"Metrics analyzed: {db.check_if_metrics_analyzed('frege-extractor', 'master')}")
+    repository_info = github.get_repository(repository_name)
+
+    return repository_info
