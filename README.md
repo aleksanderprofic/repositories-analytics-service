@@ -1,32 +1,74 @@
 # Repositories Analytics Service
 
-Module that assigns repository's sources to programming languages and passes them to analyzers.
+Backend module for the Repositories Analytics System. 
 
-The application listens for RabbitMQ messages from queue `extract` in the following format:
+## Endpoints
 
+### Repository information
+
+Service sends requests directly to the provider's API (currently only GitHub, 
+but in the future also from Gitlab, Bitbucket etc.) and extracts/modifies the data 
+it returns. Then, returns the repository information as a JSON in the following format:
 ```
 {
-    "repo_id": "<repo_id>"
+    "languages": {
+        "<language_name>": <percentage_value>
+    }, 
+    "repositoryStatistics": {
+        "<statistic>": <value>
+    },
+    "branches": [
+        {
+            "name": "<name>",
+            "commits": [<commits>]
+        }
+    ]
 }
 ```
-After receiving a message, it scans the directory named `<repo_id>` 
-for any source files by their extensions. Then, it inserts in the database proper entries in tables
-`repository_language`, and `repository_language_file`. Finally, for each language found in the repository,
- the same RabbitMQ message is passed to its analyzer queue.
 
-## Running
+### Files metrics
 
-Run this application with the following command:
+Metrics format returned by the endpoint:
+```
+{
+    "<commit_hash>": {
+        "<language_name>": {
+            "<file_path>": {
+                "<metric_name>": <value>
+            }
+        }
+    }
+}
+```
+By default, service gets currently available metrics from the database and returns 
+them to the user in the above format. In case the `return_only_if_all_available` 
+parameter is set to `true`, service first checks if ALL metrics are available 
+for specified commits and repository. Then:
+- If yes, it returns the metrics for all files within specified commits and repository 
+as a JSON in the above format.
+- If no, it sends the message to the `downloader` queue in the following format:
+```
+{
+    "repo_id": string,
+    "git_url": string,
+    "languages": [int],
+    "commits": [string]
+}
+```
+that starts the chain of downloading, extracting and analyzing the files in 
+the specified commits and repository.
 
-`docker run -it jagiellonian/frege-extractor <environmental variables> -v 
-<path to repositories directory>:\repo_downloads`
+## Building the application into a docker image
 
-Use `-v` option to mount volume that contains repositories' directory.
-Target volume inside the container is called 'repo_downloads'.
+To build the application into a docker image, run the following command 
+in a directory where the Dockerfile is located:
+```
+docker build -t <name_of_the_image> .
+```
 
-## Environmental variables
+## Environment variables
 
-Run this application with following environmental variables:
+To run this application you need the following environment variables set:
 
 - `RMQ_HOST` - RabbitMQ host
 - `RMQ_PORT` - RabbitMQ port
@@ -36,6 +78,20 @@ Run this application with following environmental variables:
 - `DB_DATABASE` - database name
 - `DB_USERNAME` - database user name
 - `DB_PASSWORD` - database user password
+
+## Running the application in a docker container
+
+Run this application in a docker container with the following command:
+
+`docker run -it <name_of_the_image> <environmental variables>`
+
+## Running as a Flask application directly
+
+Run this as a Flask application with one of the following commands:
+
+`python3 main.py`
+or
+`flask --app main --debug run`
 
 ## Authors
 
