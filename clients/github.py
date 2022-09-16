@@ -21,11 +21,18 @@ def _get_repository_branches(repository_name: str):
     return requests.get(f"{_GITHUB_HOST}/repos/{repository_name}/branches").json()
 
 
+def _compute_language_percentages(language_statistics: dict):
+    values = language_statistics.values()
+    values_sum = sum(values)
+
+    return {language_name: round(value * 100 / values_sum, 2) for language_name, value in language_statistics.items()}
+
+
 def get_repository(repository_name: str):
     branches_raw = _get_repository_branches(repository_name)
     commits_raw = _get_repository_commits(repository_name)
     repository_statistics = _get_repository_statistics(repository_name)
-    languages = _get_repository_languages(repository_name)
+    languages = _compute_language_percentages(_get_repository_languages(repository_name))
 
     branch_to_commits = defaultdict(list)
     commit_sha_to_branch_names = {}
