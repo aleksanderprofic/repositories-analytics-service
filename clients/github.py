@@ -10,7 +10,7 @@ def _get_repository_statistics(repository_name: str):
 
 
 def _get_repository_languages(repository_name: str):
-    return requests.get(f"{_GITHUB_HOST}//repos/{repository_name}/languages").json()
+    return requests.get(f"{_GITHUB_HOST}/repos/{repository_name}/languages").json()
 
 
 def _get_repository_commits(repository_name: str):
