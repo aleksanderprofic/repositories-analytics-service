@@ -41,28 +41,28 @@ def _map_metrics(raw_metrics: list) -> dict:
             in raw_metrics:
         language_name = _ID_TO_LANGUAGE_NAME[language_id]
 
-        result[commit_hash][file_path][language_name]['h1'] = h1
-        result[commit_hash][file_path][language_name]['h2'] = h2
-        result[commit_hash][file_path][language_name]['n1'] = n1
-        result[commit_hash][file_path][language_name]['n2'] = n2
-        result[commit_hash][file_path][language_name]['vocabulary'] = vocabulary
-        result[commit_hash][file_path][language_name]['length'] = length
-        result[commit_hash][file_path][language_name]['calculated_length'] = calculated_length
-        result[commit_hash][file_path][language_name]['volume'] = volume
-        result[commit_hash][file_path][language_name]['difficulty'] = difficulty
-        result[commit_hash][file_path][language_name]['effort'] = effort
-        result[commit_hash][file_path][language_name]['time'] = time
-        result[commit_hash][file_path][language_name]['bugs'] = bugs
-        result[commit_hash][file_path][language_name]['loc'] = loc
-        result[commit_hash][file_path][language_name]['lloc'] = lloc
-        result[commit_hash][file_path][language_name]['sloc'] = sloc
-        result[commit_hash][file_path][language_name]['comments'] = comments
-        result[commit_hash][file_path][language_name]['multi'] = multi
-        result[commit_hash][file_path][language_name]['blank'] = blank
-        result[commit_hash][file_path][language_name]['single_comments'] = single_comments
-        result[commit_hash][file_path][language_name]['score'] = score
-        result[commit_hash][file_path][language_name]['rank'] = rank
+        result[commit_hash][language_name][file_path]['h1'] = h1
+        result[commit_hash][language_name][file_path]['h2'] = h2
+        result[commit_hash][language_name][file_path]['n1'] = n1
+        result[commit_hash][language_name][file_path]['n2'] = n2
+        result[commit_hash][language_name][file_path]['vocabulary'] = vocabulary
+        result[commit_hash][language_name][file_path]['length'] = length
+        result[commit_hash][language_name][file_path]['calculated_length'] = calculated_length
+        result[commit_hash][language_name][file_path]['volume'] = volume
+        result[commit_hash][language_name][file_path]['difficulty'] = difficulty
+        result[commit_hash][language_name][file_path]['effort'] = effort
+        result[commit_hash][language_name][file_path]['time'] = time
+        result[commit_hash][language_name][file_path]['bugs'] = bugs
+        result[commit_hash][language_name][file_path]['loc'] = loc
+        result[commit_hash][language_name][file_path]['lloc'] = lloc
+        result[commit_hash][language_name][file_path]['sloc'] = sloc
+        result[commit_hash][language_name][file_path]['comments'] = comments
+        result[commit_hash][language_name][file_path]['multi'] = multi
+        result[commit_hash][language_name][file_path]['blank'] = blank
+        result[commit_hash][language_name][file_path]['single_comments'] = single_comments
+        result[commit_hash][language_name][file_path]['score'] = score
+        result[commit_hash][language_name][file_path]['rank'] = rank
         if unrecognized:
-            result[commit_hash][file_path][language_name]['unrecognized_metrics'] = unrecognized
+            result[commit_hash][language_name][file_path]['unrecognized_metrics'] = unrecognized
 
     return result
