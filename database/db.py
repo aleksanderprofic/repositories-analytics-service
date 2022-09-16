@@ -1,3 +1,4 @@
+import logging
 from typing import Tuple
 
 import psycopg2
@@ -13,23 +14,25 @@ query_metrics = """SELECT commit_hash, file_path, language_id, h1, h2, n1,
                         JOIN python_file pf ON hm.python_file_id = pf.id
                         JOIN repository_language_file rlf on pf.file_id = rlf.id
                         JOIN repository_language rl on rlf.repository_language_id = rl.id
-                        WHERE repository_id=%s AND commit_hash IN %s"""
+                        WHERE repository_id=%s AND commit_hash IN %s AND language_id IN %s"""
 
-query_metrics_analyzed = """SELECT COUNT(*) FROM repository_language rl
+query_metrics_analyzed = """SELECT COUNT(*) FROM repository_language
                         WHERE repository_id=%s AND commit_hash IN %s AND present=true AND analyzed=true"""
 
-query_metrics_present = """SELECT COUNT(*) FROM repository_language rl
+query_metrics_present = """SELECT COUNT(*) FROM repository_language
                         WHERE repository_id=%s AND commit_hash IN %s AND present=true"""
+
+query_get_repo_download_time = """SELECT download_time FROM repositories WHERE repo_id=%s"""
 
 
 def _connect():
     return psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS, port=DB_PORT)
 
 
-def get_metrics(repo_id: str, commits: Tuple[str]):
+def get_metrics(repo_id: str, commits: Tuple[str], languages: Tuple[int]):
     with _connect() as conn:
         with conn.cursor() as cur:
-            cur.execute(query_metrics, [repo_id, commits])
+            cur.execute(query_metrics, [repo_id, commits, languages])
             return cur.fetchall()
 
 
@@ -45,3 +48,10 @@ def check_if_metrics_analyzed(repo_id: str, commits: Tuple[str]) -> Tuple[bool, 
             cur.execute(query_metrics_present, [repo_id, commits])
             present = cur.fetchone()[0]
             return present == 0 or present - analyzed == 0, present, analyzed
+
+
+def check_repo_download_time(repo_id: str) -> bool:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query_get_repo_download_time, [repo_id])
+            return cur.fetchone()[0]

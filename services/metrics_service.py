@@ -1,8 +1,9 @@
 from collections import defaultdict
 from typing import Tuple
+
 from database import db
 
-_ID_TO_LANGUAGE_NAME = {
+ID_TO_LANGUAGE_NAME = {
     1: 'C',
     2: 'C++',
     3: 'C#',
@@ -16,20 +17,24 @@ _ID_TO_LANGUAGE_NAME = {
 
 
 # Returns metrics only when all were analyzed, otherwise returns 404
-def get_final_metrics(repo_id: str, commits: Tuple[str]):
+def get_final_metrics(repo_id: str, commits: Tuple[str], languages: Tuple[int]):
     all_metrics_analyzed, present_metrics, analyzed_metrics = db.check_if_metrics_analyzed(repo_id, commits)
     if present_metrics == 0:
-        return "Analysis not started yet. Try again in a few seconds. Note: If there will be no results after several" \
+        download_time = db.check_repo_download_time(repo_id)
+        if not download_time:
+            # TODO: Send message to queue - initiate analysis
+            return "Analysis initiated", 201
+        return "Analysis just started. Try again in a few seconds. Note: If there will be no results after several" \
                f" attempts, there is a chance that there are no files to analyze for provided commits", 404
     if not all_metrics_analyzed:
         return f"{present_metrics - analyzed_metrics} metrics not fully analyzed yet. Current progress: " \
                f"{analyzed_metrics}/{present_metrics}. Try again in a few seconds.", 404
-    return _map_metrics(db.get_metrics(repo_id, commits))
+    return _map_metrics(db.get_metrics(repo_id, commits, languages))
 
 
 # Always returns metrics, even if not all metrics were analyzed
-def get_current_metrics(repo_id: str, commits: Tuple[str]):
-    return _map_metrics(db.get_metrics(repo_id, commits))
+def get_current_metrics(repo_id: str, commits: Tuple[str], languages: Tuple[int]):
+    return _map_metrics(db.get_metrics(repo_id, commits, languages))
 
 
 def _map_metrics(raw_metrics: list) -> dict:
@@ -39,7 +44,7 @@ def _map_metrics(raw_metrics: list) -> dict:
         difficulty, effort, time, bugs, loc, lloc, sloc, comments, multi, blank, single_comments, score, rank, \
         *unrecognized \
             in raw_metrics:
-        language_name = _ID_TO_LANGUAGE_NAME[language_id]
+        language_name = ID_TO_LANGUAGE_NAME[language_id]
 
         result[commit_hash][language_name][file_path]['h1'] = h1
         result[commit_hash][language_name][file_path]['h2'] = h2
