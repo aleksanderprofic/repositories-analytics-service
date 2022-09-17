@@ -24,6 +24,8 @@ query_metrics_present = """SELECT COUNT(*) FROM repository_language
 
 query_get_repo_download_time = """SELECT download_time FROM repositories WHERE repo_id=%s"""
 
+query_insert_repo = """INSERT INTO repositories VALUES (%s, %s, %s, null) ON CONFLICT DO NOTHING"""
+
 
 def _connect():
     return psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS, port=DB_PORT)
@@ -36,7 +38,7 @@ def get_metrics(repo_id: str, commits: Tuple[str], languages: Tuple[int]):
             return cur.fetchall()
 
 
-def check_if_metrics_analyzed(repo_id: str, commits: Tuple[str]) -> Tuple[bool, int, int]:
+def get_metrics_analysis_info(repo_id: str, commits: Tuple[str]) -> Tuple[bool, int, int]:
     """
     :return: Tuple of (bool, int, int) which corresponds to (if all metrics analyzed, present_metrics, analyzed_metrics)
     """
@@ -47,6 +49,11 @@ def check_if_metrics_analyzed(repo_id: str, commits: Tuple[str]) -> Tuple[bool, 
 
             cur.execute(query_metrics_present, [repo_id, commits])
             present = cur.fetchone()[0]
+            print(f"present == 0: {present == 0}")
+            print(f"present - analyzed == 0: {present - analyzed == 0}")
+            print(f"present == 0 or present - analyzed == 0: {present == 0 or present - analyzed == 0}")
+            print(f"present: {present}")
+            print(f"analyzed: {analyzed}")
             return present == 0 or present - analyzed == 0, present, analyzed
 
 
@@ -55,3 +62,9 @@ def check_repo_download_time(repo_id: str) -> bool:
         with conn.cursor() as cur:
             cur.execute(query_get_repo_download_time, [repo_id])
             return cur.fetchone()[0]
+
+
+def insert_repo_to_repositories_if_not_exists(repo_id: str, git_url: str, repo_url: str):
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query_insert_repo, [repo_id, git_url, repo_url])

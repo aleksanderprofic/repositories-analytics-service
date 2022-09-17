@@ -41,8 +41,8 @@ Metrics format returned by the endpoint:
 }
 ```
 By default, service gets currently available metrics from the database and returns 
-them to the user in the above format. In case the `return_only_if_all_available` 
-parameter is set to `true`, service first checks if ALL metrics are available 
+them to the user in the above format. In case the `get_currently_available` 
+parameter is set to `false`, service first checks if ALL metrics are available 
 for specified commits and repository. Then:
 - If yes, it returns the metrics for all files within specified commits and repository 
 as a JSON in the above format.

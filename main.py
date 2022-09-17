@@ -1,15 +1,15 @@
 import os
 
 from flask import Flask, request
-from services.metrics_service import get_final_metrics, get_current_metrics, ID_TO_LANGUAGE_NAME
-from services.repository_service import get_repository
+from services import metrics_service
+from services import repository_service
 
 app = Flask(__name__)
 
 
 @app.route("/repository")
 def repository():
-    return get_repository(repo_id=request.args['repo_id'])
+    return repository_service.get_repository(url=request.args['url'])
 
 
 @app.route("/metrics", methods=["POST"])
@@ -19,14 +19,11 @@ def all_metrics():
 
     request_body = request.json
     repo_id, commits = request_body['repo_id'], tuple(request_body['commits'])
-    languages = tuple(request_body.get('languages', ID_TO_LANGUAGE_NAME.keys()))
-    return_only_if_all_available = request_body.get('return_only_if_all_available', False)
+    languages = tuple(request_body.get('languages', metrics_service.ID_TO_LANGUAGE_NAME.keys()))
+    get_currently_available = request_body.get('get_currently_available', True)
 
-    if return_only_if_all_available:
-        return get_final_metrics(repo_id, commits, languages)
-    else:
-        return get_current_metrics(repo_id, commits, languages)
+    return metrics_service.get_metrics(repo_id, commits, languages, get_currently_available)
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('FLASK_PORT', 8080)))
+    app.run(debug=True, host='0.0.0.0', port=5000)

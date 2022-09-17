@@ -28,11 +28,11 @@ def _compute_language_percentages(language_statistics: dict):
     return {language_name: round(value * 100 / values_sum, 2) for language_name, value in language_statistics.items()}
 
 
-def get_repository(repository_name: str):
-    branches_raw = _get_repository_branches(repository_name)
-    commits_raw = _get_repository_commits(repository_name)
-    repository_statistics = _get_repository_statistics(repository_name)
-    languages = _compute_language_percentages(_get_repository_languages(repository_name))
+def get_repository(repo_id: str):
+    branches_raw = _get_repository_branches(repo_id)
+    commits_raw = _get_repository_commits(repo_id)
+    repository_statistics = _get_repository_statistics(repo_id)
+    languages = _compute_language_percentages(_get_repository_languages(repo_id))
 
     branch_to_commits = defaultdict(list)
     commit_sha_to_branch_names = {}
@@ -77,4 +77,9 @@ def get_repository(repository_name: str):
             )
         branches.append({'name': branch_name, 'commits': commits})
 
-    return {'languages': languages, 'branches': branches, 'repositoryStatistics': repository_statistics}
+    return {
+        'repo_id': repo_id,
+        'languages': languages,
+        'branches': branches,
+        'repositoryStatistics': repository_statistics
+    }
