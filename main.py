@@ -1,6 +1,5 @@
-import os
-
 from flask import Flask, request
+
 from services import metrics_service
 from services import repository_service
 

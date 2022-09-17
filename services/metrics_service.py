@@ -18,10 +18,10 @@ ID_TO_LANGUAGE_NAME = {
 
 def get_metrics(repo_id: str, commits: Tuple[str], languages: Tuple[int], get_currently_available: bool):
     if not db.check_repo_download_time(repo_id):
-        # TODO: Check which commits were already analyzed and send further only those commits that were not analyzed yet
+        analyzed_commits = db.get_analyzed_commits(repo_id, languages)
 
+        commits_to_analyze = set(commits).difference(analyzed_commits)
         # TODO: Send message to queue - initiate analysis
-        pass
     if not get_currently_available:
         all_metrics_analyzed, present_metrics, analyzed_metrics = db.get_metrics_analysis_info(repo_id, commits)
         if present_metrics == 0:

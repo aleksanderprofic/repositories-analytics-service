@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple
+from typing import Tuple, Set
 
 import psycopg2
 
@@ -25,6 +25,9 @@ query_metrics_present = """SELECT COUNT(*) FROM repository_language
 query_get_repo_download_time = """SELECT download_time FROM repositories WHERE repo_id=%s"""
 
 query_insert_repo = """INSERT INTO repositories VALUES (%s, %s, %s, null) ON CONFLICT DO NOTHING"""
+
+query_get_analyzed_commits = """SELECT DISTINCT commit_hash FROM repository_language WHERE repository_id=%s AND 
+                        language_id IN %s AND analyzed=true"""
 
 
 def _connect():
@@ -68,3 +71,10 @@ def insert_repo_to_repositories_if_not_exists(repo_id: str, git_url: str, repo_u
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute(query_insert_repo, [repo_id, git_url, repo_url])
+
+
+def get_analyzed_commits(repo_id, languages):
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query_get_analyzed_commits, [repo_id, languages])
+            return {row[0] for row in cur.fetchall()}

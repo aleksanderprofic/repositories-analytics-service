@@ -50,7 +50,6 @@ as a JSON in the above format.
 ```
 {
     "repo_id": string,
-    "git_url": string,
     "languages": [int],
     "commits": [string]
 }
