@@ -1,5 +1,4 @@
-import logging
-from typing import Tuple, Set
+from typing import Tuple
 
 import psycopg2
 
@@ -52,11 +51,6 @@ def get_metrics_analysis_info(repo_id: str, commits: Tuple[str]) -> Tuple[bool, 
 
             cur.execute(query_metrics_present, [repo_id, commits])
             present = cur.fetchone()[0]
-            print(f"present == 0: {present == 0}")
-            print(f"present - analyzed == 0: {present - analyzed == 0}")
-            print(f"present == 0 or present - analyzed == 0: {present == 0 or present - analyzed == 0}")
-            print(f"present: {present}")
-            print(f"analyzed: {analyzed}")
             return present == 0 or present - analyzed == 0, present, analyzed
 
 
