@@ -1,6 +1,13 @@
 from collections import defaultdict
 from typing import Tuple
 
+import json
+import logging
+import pika
+import time
+from config import OUT_QUEUE_NAME, RABBITMQ_HOST, RABBITMQ_PORT, PUBLISH_DELAY
+
+
 from database import db
 
 ID_TO_LANGUAGE_NAME = {
@@ -16,12 +23,48 @@ ID_TO_LANGUAGE_NAME = {
 }
 
 
+def _send_message(message, queue, _output_channel):
+    """Send output message to queues specified by name"""
+    while True:
+        # List of queues to retry sending
+        retry = False
+        try:
+            logging.info(f"Sending message to {queue}...")
+            _output_channel.basic_publish(
+                exchange='',
+                routing_key=queue,
+                properties=pika.BasicProperties(delivery_mode=2, ),
+                body=bytes(json.dumps(message), encoding='utf8')
+            )
+            logging.info("Output message received by RabbitMQ")
+        except pika.exceptions.NackError as e:
+            logging.info(f"Output message NACK from RabbitMQ (queue full)."
+                         f" Retrying in {PUBLISH_DELAY} s")
+            retry = True
+        # If the queues to retry list is not empty
+        if retry:
+            time.sleep(PUBLISH_DELAY)
+        else:
+            break
+
+
 def get_metrics(repo_id: str, commits: Tuple[str], languages: Tuple[int], get_currently_available: bool):
     if not db.check_repo_download_time(repo_id):
         analyzed_commits = db.get_analyzed_commits(repo_id, languages)
 
         commits_to_analyze = set(commits).difference(analyzed_commits)
-        # TODO: Send message to queue - initiate analysis
+
+        message_to_queue = {'repo_id': repo_id, 'languages': languages, 'commits': commits_to_analyze}
+
+        with pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT)) as connection:
+            _output_channel = connection.channel()
+            _output_channel.confirm_delivery()
+            _output_channel.queue_declare(queue=OUT_QUEUE_NAME, durable=True)
+            logging.info("Connected.")
+
+            _send_message(message_to_queue, OUT_QUEUE_NAME, _output_channel)
+            logging.info("Finished extractor task.\n")
+
     if not get_currently_available:
         all_metrics_analyzed, present_metrics, analyzed_metrics = db.get_metrics_analysis_info(repo_id, commits)
         if present_metrics == 0:
